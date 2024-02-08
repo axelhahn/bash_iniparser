@@ -6,6 +6,7 @@
 #
 # ----------------------------------------------------------------------
 # 2024-02-04  v0.1  Initial version
+# 2024-02-08  v0.2  add ini.varexport; improve replacements of quotes
 # ======================================================================
 
 INI_FILE=
@@ -94,13 +95,41 @@ function ini.value(){
             local myfile=$1
             local mysection=$2
             local myvarname=$3
-            ini.section "${myfile}" "${mysection}" \
+            local out
+            out=$(ini.section "${myfile}" "${mysection}" \
                 | grep "^[\ \t]*${myvarname}[\ \t]*=.*" \
                 | cut -f 2 -d "=" \
-                | sed -e 's,^\ *,,' -e 's, *$,,' \
-                    -e 's,^",,g' -e 's,"$,,g' \
-                    -e "s,^',,g" -e "s,'$,,g"
+                | sed -e 's,^\ *,,' -e 's, *$,,' 
+                )
+            grep "\[\]$" <<< "myvarname" >/dev/null && out="echo $out | tail -1"
+
+            # delete quote chars on start and end
+            grep '^".*"$' <<< "$out" >/dev/null && out=$(echo "$out" | sed -e's,^"\(.*\)"$,\1,g')
+            grep "^'.*'$" <<< "$out" >/dev/null && out=$(echo "$out" | sed -e"s,^'\(.*\)'$,\1,g")
+            echo "$out"
         fi
 }
 
+# Create bash code to export all variables as hash.
+# Example: eval "$( ini.varexport "cfg_" "$inifile" )"
+#
+# param  string  prefix for the variables
+# param  string  ini file to read
+function ini.varexport(){
+    local myprefix="$1"
+    local myfile="$2"
+    local var=
+
+    for mysection in $(ini.sections "$myfile"); do
+        var="${myprefix}${mysection}"
+        echo "declare -A ${var}; "
+        echo "export ${var}; "
+        
+        for mykey in $(ini.keys "$myfile" "$mysection"); do
+            value="$(ini.value "$myfile" "$mysection" "$mykey")"
+            echo ${var}[$mykey]="\"$value\""
+        done
+    done
+    
+}
 # ----------------------------------------------------------------------

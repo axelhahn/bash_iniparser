@@ -8,7 +8,7 @@ cd "$( dirname $0 )"
 inifile=demo1.ini
 
 echo "========== $inifile"
-cat "$inifile"
+# cat "$inifile"
 echo
 echo "----- sections:"
 ini.sections "$inifile"
@@ -30,4 +30,12 @@ ini.set "$inifile" "database"
 echo
 echo "----- value: server        = [$( ini.value "server" )]"
 echo "----- value: file          = [$( ini.value "file" )]"
+echo "----- value: dns           = [$( ini.value "dns" )]"
+echo "----- value: dns[]         = [$( ini.value "dns[]" )]"
 echo "----- value: owner -> name = [$( ini.value "owner" "name" )]"
+echo
+echo "TEST export"
+eval "$( ini.varexport "cfg_" "$inifile" )"
+
+echo "keys cfg_database   = "${!cfg_database[@]}""
+echo "values cfg_database = "${cfg_database[*]}""

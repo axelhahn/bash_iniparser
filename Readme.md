@@ -32,7 +32,7 @@ echo "Server is $server"
 
 If you read multiple values from the same section, you can use set file and maybe section too.
 
-`ini.set /path/to/initfile`
+`ini.set "<inifile>"`
 
 Get a value from ini file using ini.value with 2 parameters:
 
@@ -41,7 +41,7 @@ Get a value from ini file using ini.value with 2 parameters:
 
 OR
 
-`ini.set /path/to/initfile <section>` to shorten the access with the key only.
+`ini.set "<inifile>" <section>` to shorten the access with the key only.
 
 Example:
 
@@ -76,12 +76,24 @@ database
 
 ### Get a section
 
-`ini.sections "<inifile>" <section>`
+`ini.section "<inifile>" <section>`
 
 returns the subset from inifile with the given section name.
 
 ```txt
 key1 = "value 1"
 key2 = "value 2"
+...
+```
+
+### Get variables of a section
+
+`ini.keys "<inifile>" <section>`
+
+returns the variable names of a section in alphabetic order
+
+```txt
+key1
+key2
 ...
 ```

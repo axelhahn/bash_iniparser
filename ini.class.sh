@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------
 # 2024-02-04  v0.1  Initial version
 # 2024-02-08  v0.2  add ini.varexport; improve replacements of quotes
+# 2024-02-10  v0.3  handle spaces and tabs around vars and values
 # ======================================================================
 
 INI_FILE=
@@ -56,7 +57,7 @@ function ini.setsection(){
 # Get all sections
 # param1 - name of the ini file
 function ini.sections(){
-        local myfile=$1
+        local myfile=${1:-INI_FILE}
         grep "^\[" "$myfile" | sed 's,^\[,,' | sed 's,\].*,,'
 }
 
@@ -64,20 +65,23 @@ function ini.sections(){
 # param1 - name of the ini file
 # param2 - name of the section in ini file
 function ini.section(){
-        local myfile=$1
-        local mysection=$2
-        sed -e "0,/^\[${mysection}\]/ d" -e '/^\[/,$ d' $myfile | grep -v "^[#;]"
+        local myfile=${1:-INI_FILE}
+        local mysection=${2:-INI_SECTION}
+        sed -e "0,/^\[${mysection}\]/ d" -e '/^\[/,$ d' $myfile \
+            | grep -v "^[#;]" \
+            | sed -e "s/^[ \t]*//g" -e "s/[ \t]*=[ \t]*/=/g"
 }
 
 # Get all keys inside a section
 # param1 - name of the ini file
 # param2 - name of the section in ini file
 function ini.keys(){
-        local myfile=$1
-        local mysection=$2
+        local myfile=${1:-INI_FILE}
+        local mysection=${2:-INI_SECTION}
         ini.section "${myfile}" "${mysection}" \
             | grep "^[\ \t]*[^=]" \
-            | cut -f 1 -d "="
+            | cut -f 1 -d "=" \
+            | sort -u
 }
 
 
@@ -98,7 +102,7 @@ function ini.value(){
             local out
             out=$(ini.section "${myfile}" "${mysection}" \
                 | grep "^[\ \t]*${myvarname}[\ \t]*=.*" \
-                | cut -f 2 -d "=" \
+                | cut -f 2- -d "=" \
                 | sed -e 's,^\ *,,' -e 's, *$,,' 
                 )
             grep "\[\]$" <<< "myvarname" >/dev/null && out="echo $out | tail -1"

@@ -8,6 +8,7 @@
 # 2024-02-04  v0.1  Initial version
 # 2024-02-08  v0.2  add ini.varexport; improve replacements of quotes
 # 2024-02-10  v0.3  handle spaces and tabs around vars and values
+# 2024-02-12  v0.4  rename local varables
 # ======================================================================
 
 INI_FILE=
@@ -57,17 +58,17 @@ function ini.setsection(){
 # Get all sections
 # param1 - name of the ini file
 function ini.sections(){
-        local myfile=${1:-INI_FILE}
-        grep "^\[" "$myfile" | sed 's,^\[,,' | sed 's,\].*,,'
+        local myinifile=${1:-$INI_FILE}
+        grep "^\[" "$myinifile" | sed 's,^\[,,' | sed 's,\].*,,'
 }
 
 # Get all content inside a section
 # param1 - name of the ini file
 # param2 - name of the section in ini file
 function ini.section(){
-        local myfile=${1:-INI_FILE}
-        local mysection=${2:-INI_SECTION}
-        sed -e "0,/^\[${mysection}\]/ d" -e '/^\[/,$ d' $myfile \
+        local myinifile=${1:-$INI_FILE}
+        local myinisection=${2:-$INI_SECTION}
+        sed -e "0,/^\[${myinisection}\]/ d" -e '/^\[/,$ d' $myinifile \
             | grep -v "^[#;]" \
             | sed -e "s/^[ \t]*//g" -e "s/[ \t]*=[ \t]*/=/g"
 }
@@ -76,9 +77,9 @@ function ini.section(){
 # param1 - name of the ini file
 # param2 - name of the section in ini file
 function ini.keys(){
-        local myfile=${1:-INI_FILE}
-        local mysection=${2:-INI_SECTION}
-        ini.section "${myfile}" "${mysection}" \
+        local myinifile=${1:-$INI_FILE}
+        local myinisection=${2:-$INI_SECTION}
+        ini.section "${myinifile}" "${myinisection}" \
             | grep "^[\ \t]*[^=]" \
             | cut -f 1 -d "=" \
             | sort -u
@@ -96,11 +97,11 @@ function ini.value(){
         elif [ -z "$2" ]; then
             ini.value "$INI_FILE" "$INI_SECTION" "$1"
         else
-            local myfile=$1
-            local mysection=$2
+            local myinifile=$1
+            local myinisection=$2
             local myvarname=$3
             local out
-            out=$(ini.section "${myfile}" "${mysection}" \
+            out=$(ini.section "${myinifile}" "${myinisection}" \
                 | grep "^[\ \t]*${myvarname}[\ \t]*=.*" \
                 | cut -f 2- -d "=" \
                 | sed -e 's,^\ *,,' -e 's, *$,,' 
@@ -121,16 +122,16 @@ function ini.value(){
 # param  string  ini file to read
 function ini.varexport(){
     local myprefix="$1"
-    local myfile="$2"
+    local myinifile="$2"
     local var=
 
-    for mysection in $(ini.sections "$myfile"); do
-        var="${myprefix}${mysection}"
+    for myinisection in $(ini.sections "$myinifile"); do
+        var="${myprefix}${myinisection}"
         echo "declare -A ${var}; "
         echo "export ${var}; "
         
-        for mykey in $(ini.keys "$myfile" "$mysection"); do
-            value="$(ini.value "$myfile" "$mysection" "$mykey")"
+        for mykey in $(ini.keys "$myinifile" "$myinisection"); do
+            value="$(ini.value "$myinifile" "$myinisection" "$mykey")"
             echo ${var}[$mykey]="\"$value\""
         done
     done

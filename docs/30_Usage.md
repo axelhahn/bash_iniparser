@@ -8,6 +8,8 @@ cd $( dirname $0 )
 . vendor/ini.class.sh || exit 1
 ```
 
+With `ini.help` you get a help with the basic functions.
+
 ### Get values directly
 
 This is the maybe most used feature: give me a value from an ini file in a given section.
@@ -100,3 +102,9 @@ key1
 key2
 ...
 ```
+
+### Dump
+
+With `ini.dump "<inifile>"` you get a colored output of the ini file and its parsed sections, keys and values.
+
+Use this function if you don't get an expected value.

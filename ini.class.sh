@@ -15,6 +15,7 @@
 # 2024-02-10  v0.3  handle spaces and tabs around vars and values
 # 2024-02-12  v0.4  rename local varables
 # 2024-02-20  v0.5  handle special chars in keys; add ini.dump + ini.help
+# 2024-02-21  v0.6  harden ini.value for keys with special chars; fix fetching last value
 # ======================================================================
 
 INI_FILE=
@@ -107,13 +108,16 @@ function ini.value(){
             local myinisection=$2
             local myvarname=$3
             local out
-            regex="${myvarname//[^a-zA-Z0-9]/.}"
+            regex="${myvarname//[^a-zA-Z0-9:()]/.}"
             out=$(ini.section "${myinifile}" "${myinisection}" \
-                | grep "^[\ \t]*$regex[\ \t]*=.*" \
+                | sed "s,^[\ \t]*,,g" \
+                | sed "s,[\ \t]*=,=,g"  \
+                | grep -F "${myvarname}=" \
+                | grep "^${regex}=" \
                 | cut -f 2- -d "=" \
                 | sed -e 's,^\ *,,' -e 's, *$,,' 
                 )
-            grep "\[\]$" <<< "myvarname" >/dev/null && out="echo $out | tail -1"
+            grep "\[\]$" <<< "$myvarname" >/dev/null || out="$( echo "$out" | tail -1 )"
 
             # delete quote chars on start and end
             grep '^".*"$' <<< "$out" >/dev/null && out=$(echo "$out" | sed -e's,^"\(.*\)"$,\1,g')

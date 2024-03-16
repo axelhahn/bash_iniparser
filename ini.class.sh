@@ -16,6 +16,7 @@
 # 2024-02-12  v0.4  rename local varables
 # 2024-02-20  v0.5  handle special chars in keys; add ini.dump + ini.help
 # 2024-02-21  v0.6  harden ini.value for keys with special chars; fix fetching last value
+# 2024-03-17  v0.7  add ini.validate
 # ======================================================================
 
 INI_FILE=
@@ -75,7 +76,7 @@ function ini.sections(){
 function ini.section(){
         local myinifile=${1:-$INI_FILE}
         local myinisection=${2:-$INI_SECTION}
-        sed -e "0,/^\[${myinisection}\]/ d" -e '/^\[/,$ d' $myinifile \
+        sed -e "0,/^\[${myinisection}\]/ d" -e '/^\[/,$ d' "$myinifile" \
             | grep -v "^[#;]" \
             | sed -e "s/^[ \t]*//g" -e "s/[ \t]*=[ \t]*/=/g"
 }
@@ -157,6 +158,14 @@ ini.dump() {
 }
 
 function ini.help(){
+
+    # local _self
+    # if _is_sourced; then
+    #     _self="ini."
+    # else
+    #     _self="$( basename "$0" ) "
+    # fi
+
     cat <<EOH
 
     INI.CLASS.SH
@@ -241,4 +250,165 @@ function ini.varexport(){
     done
     
 }
+
+# validate the ini file
+function ini.validate(){
+
+    function _vd(){
+        test "$bShowAll" -ne "0" && echo "$*"
+    }
+
+    local myinifile="$1"
+    local myvalidationfile="$2"
+    local bShowAll="${3:-0}"
+
+    local ERROR="\e[1;31mERROR\e[0m"
+    local iErr; typeset -i iErr=0
+
+    # TODO: make all used vars local
+
+    _vd "START: Validate ini '${myinifile}'"
+    _vd "       with '${myvalidationfile}'"
+    if [ ! -f "${myinifile}" ]; then
+        echo -e "$ERROR: Ini file in first param '${myinifile}' does not exist."
+        return 1
+    fi
+
+    if [ ! -f "${myvalidationfile}" ]; then
+        echo -e "$ERROR: Validation file in 2nd param '${myvalidationfile}' does not exist."
+        return 1
+    fi
+
+    eval "$( ini.varexport "validate_" "$myvalidationfile" )"
+    
+    if [ -z "${validate_sections[*]}" ]; then
+        echo -e "$ERROR: Validation file in 2nd param '${myvalidationfile}' has no section definition [sections]."
+        echo "       Hint: Maybe it is no validation file (yet) or you flipped the parameters."
+        return 1
+    fi
+    if [ -z "${validate_varsMust[*]}${validate_varsCan[*]}" ]; then
+        echo -e "$ERROR: Validation file in 2nd param '${myvalidationfile}' has no key definition [varsMust] and [varsCan]."
+        echo "       Hint: Maybe it is no validation file (yet) or you flipped the parameters."
+        return 1
+    fi
+
+
+    # ----- Check if all MUST sections are present
+    if [ -n "${validate_sections['must']}" ]; then
+        _vd "--- Sections that MUST exist:"
+        for section in $( tr "," " " <<< "${validate_sections['must']}");
+        do
+            if ini.sections "$myinifile" | grep -q "^$section$" ; then
+                _vd "OK: Section [$section] is present."
+            else
+                echo -e "$ERROR: Section [$section] is not present."
+                iErr+=1
+            fi
+        done
+    fi
+
+    # ----- Loop over sections
+    _vd "--- Validate section names"
+    for section in $( ini.sections "$myinifile" )
+    do
+        # ----- Check if our section name has the allowed syntax
+        if ! grep -q "${validate_style['section']}" <<< "$section" ; then
+            echo -e "$ERROR: Section [$section] violates style rule '${validate_style['section']}'"
+        fi
+
+        # ----- Check if our sections are in MUST or CAN
+        if ! grep -Fq ",${section}," <<< ",${validate_sections['must']},${validate_sections['must']},"; then
+            echo -e "$ERROR: Unknown section name: [$section] - ist is not listed as MUST nor CAN."
+            iErr+=1
+        else
+            _vd "OK: section [$section] is valid"
+            _vd "  Check keys of section [$section]"
+
+            # ----- Check MUST keys in the current section
+            for myKeyEntry in "${!validate_varsMust[@]}"; do
+                if ! grep -q "^${section}\." <<< "${myKeyEntry}"; then
+                    continue
+                fi
+                mustkey="$( echo "$myKeyEntry" | cut -f2 -d '.')"
+                # TODO
+                keyregex="$( echo "$mustkey" | sed -e's,\[,\\[,g' )"
+                if ini.keys "$myinifile" "$section" | grep -q "^${keyregex}$"; then
+                    _vd "  OK: [$section] -> $mustkey is a MUST"
+                else
+                    echo -e "  $ERROR: [$section] -> $mustkey is a MUST key but was not found im section [$section]."
+                    iErr+=1
+                fi
+
+            done
+
+            # ----- Check if our keys are MUST or CAN keys
+            for mykey in $( ini.keys "$myinifile" "$section"); do
+
+                if ! grep -q "${validate_style['key']}" <<< "$mykey" ; then
+                    echo -e "$ERROR: Key [$section] -> $mykey violates style rule '${validate_style['key']}'"
+                fi
+
+                keyregex="$( echo "${mykey}" | sed -e's,\[,\\[,g' | sed -e's,\],\\],g' )"
+
+                local mustKeys
+                mustKeys="$( echo "${!validate_varsMust[@]}" | tr ' ' ',')"
+                local canKeys
+                canKeys="$( echo "${!validate_varsCan[@]}" | tr ' ' ',')"
+
+                if ! grep -Fq ",${section}.$mykey," <<< ",${canKeys},${mustKeys},"; then
+                    echo -e "  $ERROR: [$section] -> $mykey is invalid."
+                    iErr+=1
+                else
+
+                    local valKey
+                    valKey="${section}.${mykey}"
+                    if [ -n "${validate_varsCan[$valKey]}" ] && [ -n "${validate_varsMust[$valKey]}" ]; then
+                        echo -e "  $ERROR: '$valKey' is defined twice - in varsMust and varsCan as well. Check validation file '$myvalidationfile'."
+                    fi
+
+                    sValidate="${validate_varsCan[${section}.${mykey}]}"
+                    if [ -z "$sValidate" ]; then
+                        sValidate="${validate_varsMust[${section}.${mykey}]}"
+                    fi
+                    if [ -z "$sValidate" ]; then
+                        _vd "  OK: [$section] -> $mykey exists (no check)"
+                    else
+                        local checkType
+                        local checkValue
+                        local value
+
+                        checkType=$( cut -f 1 -d ':' <<< "$sValidate" )
+                        checkValue=$( cut -f 2- -d ':' <<< "$sValidate" )
+                        value="$(ini.value "$myinifile" "$section" "$mykey")"
+                        local regex
+                        case $checkType in
+                            'INTEGER') regex="^[1-9][0-9]*$"          ;;
+                            'ONEOF')   regex="^(${checkValue//,/|})$" ;;
+                            'REGEX')   regex="$checkValue"            ;;
+                            *)
+                                echo -e "  $ERROR: ceck type '$checkType' is not supported."
+                        esac
+                        if [ -n "$regex" ]; then
+                            if ! grep -Eq "${regex}" <<< "$value" ; then
+                                echo -e "  $ERROR: [$section] -> $mykey is valid but value '$value' does NOT match '$regex'"
+                            else
+                                _vd "  OK: [$section] -> $mykey is valid and value matches '$regex'"
+                            fi
+                        fi
+
+                    fi
+                fi
+            done
+        fi
+    done
+
+    if [ $iErr -gt 0 ]; then
+        echo "RESULT: Errors were found for $myinifile"
+    else
+        _vd "RESULT: OK, Ini file $myinifile looks fine."
+    fi
+    return $iErr
+
+}
+
 # ----------------------------------------------------------------------

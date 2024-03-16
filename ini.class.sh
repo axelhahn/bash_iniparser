@@ -252,6 +252,9 @@ function ini.varexport(){
 }
 
 # validate the ini file
+# param  string  path of ini file to validate
+# param  string  path of ini file with validation rules
+# param  bool    optional: show more output; default: 0
 function ini.validate(){
 
     function _vd(){

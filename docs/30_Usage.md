@@ -31,7 +31,7 @@ server=$( ini.value "/path/to/inifile" "database" "server" )
 echo "Server is $server"
 ```
 
-## Short way to get values:
+## Shorter way to get values
 
 **Remark**: Using the short variant can result in unwanted behaviuor when jumping between different ini files using the shorten syntax for all. It is just bash :-)
 
@@ -74,7 +74,7 @@ ini.value "othersection" "varname"
 It returns a list of all section names without brackets.
 
 ```txt
-genral
+general
 database
 ...
 ```
@@ -91,7 +91,7 @@ key2 = "value 2"
 ...
 ```
 
-### Get variables of a section
+### Get variable names of a section
 
 `ini.keys "<inifile>" <section>`
 
@@ -108,3 +108,13 @@ key2
 With `ini.dump "<inifile>"` you get a colored output of the ini file and its parsed sections, keys and values.
 
 Use this function if you don't get an expected value.
+
+### Validate
+
+There is an option to validate the syntax of your ini file with a given validation configuration.
+
+`ini.validate "<inifile>" "<validate.ini>" [<flag>]`
+
+The `<flag>` is optional. By default it is `0` and shows error information only on STDOUT. Set it to `1` to see more output about the validation process.
+
+See next chapter for more details for the validation syntax.

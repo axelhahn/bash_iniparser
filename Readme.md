@@ -1,4 +1,4 @@
-# ini.class.sh
+# Axels Bash INI parser
 
 A class like component to access values of an ini file 
 in your Bash scripts or to validate it.

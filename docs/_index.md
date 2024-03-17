@@ -1,6 +1,6 @@
 <html>
 <div class="hero">
-  <h2>Welcome to ini.class.sh!</h2>
+  <h2>Axels Bash INI parser</h2>
 
   A class like component to access values of an ini file<br>
   in your Bash scripts or to validate it.

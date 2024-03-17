@@ -2,9 +2,9 @@
 
 This project is written in Bash. 
 
-### Read data
-
 The main features are around reading sections and values from an INI file. 
+
+### Read data
 
 This component offers functions to get
 
@@ -22,5 +22,5 @@ You can get values as
 
 You have functions to control what is parsed from a given ini file:
 
-* you can dump the ini file to see the parsed data of your file
-* there is optional validation to check sections, keys in sections and their values.
+* you can **dump** the ini file to see the parsed data of your file
+* there is optional **validation** to check sections, keys in sections and their values.

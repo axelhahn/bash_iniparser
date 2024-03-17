@@ -2,7 +2,8 @@
 <div class="hero">
   <h2>Welcome to ini.class.sh!</h2>
 
-  A class like component to access values of an ini file in your bash scripts
+  A class like component to access values of an ini file<br>
+  in your Bash scripts or to validate it.
 
 </div>
 </html>

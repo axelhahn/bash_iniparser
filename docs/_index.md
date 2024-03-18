@@ -8,6 +8,9 @@
 </div>
 </html>
 
+You want a value from a file within a given section?
+`ini.value "<inifile>" "<section>" "<key>"` returns it.
+
 👤 Author: Axel Hahn\
 🧾 Source: <https://github.com/axelhahn/bash_iniparser/>\
 📜 License: GNU GPL 3.0\

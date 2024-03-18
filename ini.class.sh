@@ -10,6 +10,16 @@
 #  Docs:    https://www.axel-hahn.de/docs/bash_iniparser/
 #
 # ----------------------------------------------------------------------
+# TODO
+# - ini.validate: 
+#   - handle non existing validation rules
+#   - define all vars as local
+#   - detect invalid lines (all except sections, values, comments, empty lines)
+# - ini.export:
+#   - detect unsafe entries $() and backticks
+# - ini.value:
+#   - detect comment after value
+# ----------------------------------------------------------------------
 # 2024-02-04  v0.1  Initial version
 # 2024-02-08  v0.2  add ini.varexport; improve replacements of quotes
 # 2024-02-10  v0.3  handle spaces and tabs around vars and values
@@ -18,6 +28,7 @@
 # 2024-02-21  v0.6  harden ini.value for keys with special chars; fix fetching last value
 # 2024-03-17  v0.7  add ini.validate
 # 2024-03-17  v0.8  errors are written to STDERR; update help; use [[:space:]] in regex; update help
+# 2024-03-18  v0.9  validator improvements (but ini validate is not rock solid yet)
 # ======================================================================
 
 INI_FILE=
@@ -299,15 +310,17 @@ function ini.validate(){
         return 1
     fi
 
+    # declare all needed variables in case that those sections are not defined
+    # in vilidation ini
+    declare -A validate_style
+    declare -A validate_sections
+    declare -A validate_varsMust
+    declare -A validate_varsCan
+ 
     eval "$( ini.varexport "validate_" "$myvalidationfile" )"
     
-    if [ -z "${validate_sections[*]}" ]; then
-        echo -e "$ERROR: Validation file in 2nd param '${myvalidationfile}' has no section definition [sections]." >&2
-        echo "       Hint: Maybe it is no validation file (yet) or you flipped the parameters." >&2
-        return 1
-    fi
-    if [ -z "${validate_varsMust[*]}${validate_varsCan[*]}" ]; then
-        echo -e "$ERROR: Validation file in 2nd param '${myvalidationfile}' has no key definition [varsMust] and [varsCan]." >&2
+    if [ -z "${validate_style[*]}${validate_sections[*]}${validate_varsMust[*]}${validate_varsCan[*]}" ]; then
+        echo -e "$ERROR: Validation file in 2nd param doesn't seem to be a validation.ini." >&2
         echo "       Hint: Maybe it is no validation file (yet) or you flipped the parameters." >&2
         return 1
     fi
@@ -319,7 +332,7 @@ function ini.validate(){
         for section in $( tr "," " " <<< "${validate_sections['must']}");
         do
             if ini.sections "$myinifile" | grep -q "^$section$" ; then
-                _vd "OK: Section [$section] is present."
+                _vd "OK: Section is present [$section]."
             else
                 echo -e "$ERROR: Section [$section] is not present." >&2
                 iErr+=1
@@ -332,11 +345,17 @@ function ini.validate(){
     for section in $( ini.sections "$myinifile" )
     do
         # ----- Check if our section name has the allowed syntax
-        if ! grep -q "${validate_style['section']}" <<< "$section" ; then
-            echo -e "$ERROR: Section [$section] violates style rule '${validate_style['section']}'" >&2
+        if [ -n "${validate_style['section']}" ]; then
+            if ! grep -qE "${validate_style['section']}" <<< "$section" ; then
+                echo -e "$ERROR: Section [$section] violates style rule '${validate_style['section']}'" >&2
+                iErr+=1
+            else
+                _vd "OK: Section name [$section] matches style rule '${validate_style['section']}'"
+            fi
         fi
 
         # ----- Check if our sections are in MUST or CAN
+
         if ! grep -Fq ",${section}," <<< ",${validate_sections['must']},${validate_sections['must']},"; then
             echo -e "$ERROR: Unknown section name: [$section] - ist is not listed as MUST nor CAN." >&2
             iErr+=1
@@ -364,8 +383,13 @@ function ini.validate(){
             # ----- Check if our keys are MUST or CAN keys
             for mykey in $( ini.keys "$myinifile" "$section"); do
 
-                if ! grep -q "${validate_style['key']}" <<< "$mykey" ; then
-                    echo -e "$ERROR: Key [$section] -> $mykey violates style rule '${validate_style['key']}'" >&2
+                if [ -n "${validate_style['key']}" ]; then
+                    if ! grep -qE "${validate_style['key']}" <<< "$mykey" ; then
+                        echo -e "$ERROR: Key [$section] -> $mykey violates style rule '${validate_style['key']}'" >&2
+                        iErr+=1
+                    else
+                        _vd "  OK: [$section] -> $mykey matches style rule '${validate_style['key']}'"
+                    fi
                 fi
 
                 keyregex="$( echo "${mykey}" | sed -e's,\[,\\[,g' | sed -e's,\],\\],g' )"

@@ -50,6 +50,9 @@ All texts inside `<`and `>` are placeholders.
 section  = "^[a-zA-Z0-9_]*$"
 key      = "^[a-zA-Z0-9_\-]*$"
 
+# to use multiple array entries
+# key      = "^[a-zA-Z0-9_\-]*(|\[\])$"
+
 # ----------------------------------------------------------------------
 # section names
 #

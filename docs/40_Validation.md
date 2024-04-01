@@ -131,9 +131,9 @@ For both section the syntax of entries is the same:
   * If it is missed then just the value must exist and there is no check for the value.
   * A validation rule is defined as `<Keyword>[:<value>]`. For all known validation rules see the table below
 
-| Keyword         | Description                        | Type     | Value
-|---              |---                                 |---       |---
-| none            | Checks the existance of a key only |          |
-| `INTEGER`       | The value must be an integer       |          |
+| Keyword         | Description                          | Type     | Value
+|---              |---                                   |---       |---
+| none            | Checks the existance of a key only   |          |
+| `INTEGER`       | The value must be an integer         |          |
 | `ONEOF:<list>`  | The value must be one of the strings in a given list  | {string} | The list is a string with comma seperated values eg. `<value1>,<value2>,<valueN>`
-| `REGEX:<regex>` | The value must match the given regex | {regex} | A regex like `^[a-z]*$`. You need to add starting and ending character (`^` and `$`) to verify the complete value. I use `grep -E` to check extended regex.
+| `REGEX:<regex>` | The value must match the given regex | {regex}  | A regex like `^[a-z]*$`. You need to add starting and ending character (`^` and `$`) to verify the complete value. I use `grep -E` to check extended regex.

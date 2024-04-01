@@ -20,15 +20,16 @@
 # - ini.value:
 #   - detect comment after value
 # ----------------------------------------------------------------------
-# 2024-02-04  v0.1  Initial version
-# 2024-02-08  v0.2  add ini.varexport; improve replacements of quotes
-# 2024-02-10  v0.3  handle spaces and tabs around vars and values
-# 2024-02-12  v0.4  rename local varables
-# 2024-02-20  v0.5  handle special chars in keys; add ini.dump + ini.help
-# 2024-02-21  v0.6  harden ini.value for keys with special chars; fix fetching last value
-# 2024-03-17  v0.7  add ini.validate
-# 2024-03-17  v0.8  errors are written to STDERR; update help; use [[:space:]] in regex; update help
-# 2024-03-18  v0.9  validator improvements (but ini validate is not rock solid yet)
+# 2024-02-04  v0.1   Initial version
+# 2024-02-08  v0.2   add ini.varexport; improve replacements of quotes
+# 2024-02-10  v0.3   handle spaces and tabs around vars and values
+# 2024-02-12  v0.4   rename local varables
+# 2024-02-20  v0.5   handle special chars in keys; add ini.dump + ini.help
+# 2024-02-21  v0.6   harden ini.value for keys with special chars; fix fetching last value
+# 2024-03-17  v0.7   add ini.validate
+# 2024-03-17  v0.8   errors are written to STDERR; update help; use [[:space:]] in regex; update help
+# 2024-03-18  v0.9   validator improvements (but ini validate is not rock solid yet)
+# 2024-04-02  v0.10  update bashdoc
 # ======================================================================
 
 INI_FILE=
@@ -39,8 +40,8 @@ INI_SECTION=
 # ----------------------------------------------------------------------
 
 # Set the INI file - and optional section - for short calls.
-# param  string  filename
-# param  string  optional: section
+# param   string  filename
+# param   string  optional: section
 function ini.set(){
     INI_FILE=
     INI_SECTION=
@@ -55,7 +56,11 @@ function ini.set(){
 }
 
 # Set the INI section for short calls.
-# param  string  section
+#
+# global  string  $INI_FILE     filename of the ini file
+# global  string  $INI_SECTION  section of the ini file
+#
+# param   string  section
 function ini.setsection(){
     if [ -z "$INI_FILE" ]; then
         echo "ERROR: ini file needs to be set first. Use ini.set <INIFILE> [<SECTION>]." >&2
@@ -76,69 +81,84 @@ function ini.setsection(){
 # ----------------------------------------------------------------------
 
 # Get all sections
-# param1 - name of the ini file
+#
+# global  string  $INI_FILE     filename of the ini file
+#
+# param   string  name of the ini file
 function ini.sections(){
-        local myinifile=${1:-$INI_FILE}
-        grep "^\[" "$myinifile" | sed 's,^\[,,' | sed 's,\].*,,'
+    local myinifile=${1:-$INI_FILE}
+    grep "^\[" "$myinifile" | sed 's,^\[,,' | sed 's,\].*,,'
 }
 
 # Get all content inside a section
-# param1 - name of the ini file
-# param2 - name of the section in ini file
+#
+# global  string  $INI_FILE     filename of the ini file
+# global  string  $INI_SECTION  section of the ini file
+#
+# param   string  name of the ini file
+# param   string  name of the section in ini file
 function ini.section(){
-        local myinifile=${1:-$INI_FILE}
-        local myinisection=${2:-$INI_SECTION}
-        sed -e "0,/^\[${myinisection}\]/ d" -e '/^\[/,$ d' "$myinifile" \
-            | grep -v "^[#;]" \
-            | sed -e "s/^[ \t]*//g" -e "s/[ \t]*=[ \t]*/=/g"
+    local myinifile=${1:-$INI_FILE}
+    local myinisection=${2:-$INI_SECTION}
+    sed -e "0,/^\[${myinisection}\]/ d" -e '/^\[/,$ d' "$myinifile" \
+        | grep -v "^[#;]" \
+        | sed -e "s/^[ \t]*//g" -e "s/[ \t]*=[ \t]*/=/g"
 }
 
 # Get all keys inside a section
-# param1 - name of the ini file
-# param2 - name of the section in ini file
+#
+# global  string  $INI_FILE     filename of the ini file
+# global  string  $INI_SECTION  section of the ini file
+#
+# param   string  name of the ini file
+# param   string  name of the section in ini file
 function ini.keys(){
-        local myinifile=${1:-$INI_FILE}
-        local myinisection=${2:-$INI_SECTION}
-        ini.section "${myinifile}" "${myinisection}" \
-            | grep "^[\ \t]*[^=]" \
-            | cut -f 1 -d "=" \
-            | sort -u
+    local myinifile=${1:-$INI_FILE}
+    local myinisection=${2:-$INI_SECTION}
+    ini.section "${myinifile}" "${myinisection}" \
+        | grep "^[\ \t]*[^=]" \
+        | cut -f 1 -d "=" \
+        | sort -u
 }
 
 
 # Get a value of a variable in a given section
-# param1 - name of the ini file
-# param2 - name of the section in ini file
-# param3 - name of the variable to read
+#
+# global  string  $INI_FILE     filename of the ini file
+# global  string  $INI_SECTION  section of the ini file
+#
+# param   string  name of the ini file
+# param   string  name of the section in ini file
+# param   string  name of the variable to read
 function ini.value(){
 
-        if [ -n "$2" ] && [ -z "$3" ]; then
-            ini.value "$INI_FILE" "$1" "$2"
-        elif [ -z "$2" ]; then
-            ini.value "$INI_FILE" "$INI_SECTION" "$1"
-        else
-            local myinifile=$1
-            local myinisection=$2
-            local myvarname=$3
-            local out
-            regex="${myvarname//[^a-zA-Z0-9:()]/.}"
-            out=$(ini.section "${myinifile}" "${myinisection}" \
-                | sed -e "s,^[[:space:]]*,,g" -e "s,[[:space:]]*=,=,g"  \
-                | grep -F "${myvarname}=" \
-                | grep "^${regex}=" \
-                | cut -f 2- -d "=" \
-                | sed -e 's,^[[:space:]]*,,' -e 's,[[:space:]]*$,,' 
-                )
-            grep "\[\]$" <<< "$myvarname" >/dev/null || out="$( echo "$out" | tail -1 )"
+    if [ -n "$2" ] && [ -z "$3" ]; then
+        ini.value "$INI_FILE" "$1" "$2"
+    elif [ -z "$2" ]; then
+        ini.value "$INI_FILE" "$INI_SECTION" "$1"
+    else
+        local myinifile=$1
+        local myinisection=$2
+        local myvarname=$3
+        local out
+        regex="${myvarname//[^a-zA-Z0-9:()]/.}"
+        out=$(ini.section "${myinifile}" "${myinisection}" \
+            | sed -e "s,^[[:space:]]*,,g" -e "s,[[:space:]]*=,=,g"  \
+            | grep -F "${myvarname}=" \
+            | grep "^${regex}=" \
+            | cut -f 2- -d "=" \
+            | sed -e 's,^[[:space:]]*,,' -e 's,[[:space:]]*$,,' 
+            )
+        grep "\[\]$" <<< "$myvarname" >/dev/null || out="$( echo "$out" | tail -1 )"
 
-            # delete quote chars on start and end
-            grep '^".*"$' <<< "$out" >/dev/null && out=$(echo "$out" | sed -e's,^"\(.*\)"$,\1,g')
-            grep "^'.*'$" <<< "$out" >/dev/null && out=$(echo "$out" | sed -e"s,^'\(.*\)'$,\1,g")
-            echo "$out"
-        fi
+        # delete quote chars on start and end
+        grep '^".*"$' <<< "$out" >/dev/null && out=$(echo "$out" | sed -e's,^"\(.*\)"$,\1,g')
+        grep "^'.*'$" <<< "$out" >/dev/null && out=$(echo "$out" | sed -e"s,^'\(.*\)'$,\1,g")
+        echo "$out"
+    fi
 }
 
-# dump the ini file for visuall check of the parsing functions
+# Dump the ini file for visuall check of the parsing functions
 # param  string  filename
 ini.dump() {
     local myinifile=${1:-$INI_FILE}
@@ -172,6 +192,7 @@ ini.dump() {
     echo
 }
 
+# Show help
 function ini.help(){
 
     # local _self
@@ -257,10 +278,11 @@ EOH
 }
 
 # Create bash code to export all variables as hash.
-# Example: eval "$( ini.varexport "cfg_" "$inifile" )"
+# Example:
+#   eval "$( ini.varexport "cfg_" "$inifile" )"
 #
-# param  string  prefix for the variables
-# param  string  ini file to read
+# param   string  prefix for the variables
+# param   string  ini file to read
 function ini.varexport(){
     local myprefix="$1"
     local myinifile="$2"
@@ -279,10 +301,10 @@ function ini.varexport(){
     
 }
 
-# validate the ini file
-# param  string  path of ini file to validate
-# param  string  path of ini file with validation rules
-# param  bool    optional: show more output; default: 0
+# Validate the ini file
+# param   string  path of ini file to validate
+# param   string  path of ini file with validation rules
+# param   bool    optional: show more output; default: 0
 function ini.validate(){
 
     function _vd(){

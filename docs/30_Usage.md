@@ -1,5 +1,14 @@
 ## Usage
 
+<!-- START-ADD-TTY-PLAYER -->
+<html>
+    <script src=ttyrec/webcomponents-lite.min.js></script>
+    <link rel=stylesheet href=ttyrec/tty-player.css>
+    <script src=ttyrec/term.min.js></script>
+    <script src=ttyrec/tty-player.min.js></script>
+</html>
+<!-- END-ADD-TTY-PLAYER -->
+
 ### Source the script
 
 You need to source the `ini.class.sh` file in your script.
@@ -42,8 +51,14 @@ Bash:
 
 ```shell
 server=$( ini.value "settings.ini" "database" "server" )
-echo "Server is $server" # "Server is localhost"
+echo "Server is $server" 
+# shows "Server is localhost"
 ```
+### Video demo
+
+Let's have look to the most relevant ini functions in a video.
+
+<tty-player controls rows=20 cols=90 src=files/01_get_value.ttyrec poster=npt:11.00></tty-player>
 
 ## Shorter way to get values
 

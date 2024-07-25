@@ -6,7 +6,7 @@ This is helpful if users can customize configurations and you want to ensure tha
 The validation feature is a helper - it does not stop the script on a found error. But it sends a non zero returncode on error to add this in your script.
 
 ```bash
-if ! ini.validate "<inifile>" "<validate.ini>" [<flag>]; then
+if ! ini.validate "<inifile>" "<validation-rules.ini>" [<flag>]; then
     echo "Aborting."
     exit 1
 fi

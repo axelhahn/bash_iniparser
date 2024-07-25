@@ -24,11 +24,25 @@ Get a value from ini file using ini.value with 3 parameters:
 * name of the section to read
 * key / variable in the given section
 
-Example as bash:
+**Example** 
+
+If our ini file named `settings.ini`looks like this:
+
+```ini
+[general]
+...
+
+[database]
+server = localhost
+port = 3306
+...
+```
+
+Bash:
 
 ```shell
-server=$( ini.value "/path/to/inifile" "database" "server" )
-echo "Server is $server"
+server=$( ini.value "settings.ini" "database" "server" )
+echo "Server is $server" # "Server is localhost"
 ```
 
 ## Shorter way to get values

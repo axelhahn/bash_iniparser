@@ -30,6 +30,7 @@
 # 2024-03-17  v0.8   errors are written to STDERR; update help; use [[:space:]] in regex; update help
 # 2024-03-18  v0.9   validator improvements (but ini validate is not rock solid yet)
 # 2024-04-02  v0.10  update bashdoc
+# 2024-08-15  v0.11  allow / in section names
 # ======================================================================
 
 INI_FILE=
@@ -100,6 +101,10 @@ function ini.sections(){
 function ini.section(){
     local myinifile=${1:-$INI_FILE}
     local myinisection=${2:-$INI_SECTION}
+
+    # escape slashes
+    myinisection=$( sed "s#/#\\\/#g" <<< "$myinisection" )
+
     sed -e "0,/^\[${myinisection}\]/ d" -e '/^\[/,$ d' "$myinifile" \
         | grep -v "^[#;]" \
         | sed -e "s/^[ \t]*//g" -e "s/[ \t]*=[ \t]*/=/g"

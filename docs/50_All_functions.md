@@ -9,7 +9,7 @@ Dump the ini file for visuall check of the parsing functions
 🟩 param  string  filename
 ```
 
-[line: 163](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L163)
+[line: 168](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L168)
 
 ### ini.help()
 
@@ -17,7 +17,7 @@ Dump the ini file for visuall check of the parsing functions
 Show help
 ```
 
-[line: 196](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L196)
+[line: 201](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L201)
 
 ### ini.keys()
 
@@ -31,7 +31,7 @@ Get all keys inside a section
 🟩 param   string  name of the section in ini file
 ```
 
-[line: 115](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L115)
+[line: 120](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L120)
 
 ### ini.section()
 
@@ -45,7 +45,7 @@ Get all content inside a section
 🟩 param   string  name of the section in ini file
 ```
 
-[line: 100](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L100)
+[line: 101](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L101)
 
 ### ini.sections()
 
@@ -57,7 +57,7 @@ Get all sections
 🟩 param   string  name of the ini file
 ```
 
-[line: 88](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L88)
+[line: 89](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L89)
 
 ### ini.set()
 
@@ -67,7 +67,7 @@ Set the INI file - and optional section - for short calls.
 🔹 param   string  optional: section
 ```
 
-[line: 45](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L45)
+[line: 46](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L46)
 
 ### ini.setsection()
 
@@ -80,7 +80,7 @@ Set the INI section for short calls.
 🟩 param   string  section
 ```
 
-[line: 64](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L64)
+[line: 65](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L65)
 
 ### ini.validate()
 
@@ -91,7 +91,7 @@ Validate the ini file
 🔹 param   bool    optional: show more output; default: 0
 ```
 
-[line: 308](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L308)
+[line: 313](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L313)
 
 ### ini.value()
 
@@ -106,7 +106,7 @@ Get a value of a variable in a given section
 🟩 param   string  name of the variable to read
 ```
 
-[line: 133](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L133)
+[line: 138](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L138)
 
 ### ini.varexport()
 
@@ -119,5 +119,5 @@ eval "$( ini.varexport "cfg_" "$inifile" )"
 🟩 param   string  ini file to read
 ```
 
-[line: 286](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L286)
+[line: 291](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L291)
 

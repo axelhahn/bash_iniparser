@@ -113,7 +113,7 @@ Get a value of a variable in a given section
 ```txt
 Create bash code to export all variables as hash.
 Example:
-eval "$( ini.varexport "cfg_" "$inifile" )"
+  eval "$( ini.varexport "cfg_" "$inifile" )"
 
 🟩 param   string  prefix for the variables
 🟩 param   string  ini file to read
@@ -121,3 +121,5 @@ eval "$( ini.varexport "cfg_" "$inifile" )"
 
 [line: 291](https://github.com/axelhahn/bash_iniparser/blob/main/ini.class.sh#L291)
 
+- - -
+Generated with [Bashdoc](https://github.com/axelhahn/bashdoc) v0.7
